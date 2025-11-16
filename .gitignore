@@ -1,0 +1,24 @@
+# Python + Poetry venv
+.venv/
+__pycache__/
+
+# Direnv
+.env
+.envrc
+
+# Secrets (should not exist inside repo anyway)
+*.env
+*.secrets
+
+# Data / DuckDB
+data/
+*.db
+*.duckdb
+
+# macOS
+.DS_Store
+
+# Pre-commit
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/

@@ -1,0 +1,30 @@
+# .pre-commit-config.yaml
+
+repos:
+  # 1) Ruff: lint (fast)
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.14.5   # pin to a known version
+    hooks:
+      - id: ruff
+        args: ["--fix"]   # auto-fix where possible
+
+      - id: ruff-format   # auto-format code like black
+
+  # 2) MyPy: type checks (slower, but very valuable)
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.18.2
+    hooks:
+      - id: mypy
+        args: ["--config-file=mypy.ini"]
+        additional_dependencies: []  # Poetry provides deps; no need to duplicate
+
+  # 3) Optional: Pytest as a manual hook (not on every commit by default)
+  #    You can run: `pre-commit run pytest --all-files` before big pushes.
+  - repo: local
+    hooks:
+      - id: pytest
+        name: pytest
+        entry: poetry run pytest
+        language: system
+        pass_filenames: false
+        stages: [manual]  # don't run on every commit to keep things fast

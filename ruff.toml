@@ -1,0 +1,32 @@
+# ruff.toml
+target-version = "py311"
+line-length = 100
+src = ["src"]
+
+
+# Linting rules now live under the [lint] table
+[lint]
+select = [
+    "B",   # bugbear
+    "E",   # pycodestyle errors
+    "F",   # pyflakes
+    "I",   # import sorting
+    "UP",  # pyupgrade
+    "C4",  # comprehensions
+    "ARG", # unused arguments
+    "SIM", # simplify
+]
+
+# Formatting is now under [format]
+[format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "lf"
+
+# Files to exclude
+exclude = [
+    ".venv",
+    ".mypy_cache",
+    ".ruff_cache",
+    "__pycache__",
+]
