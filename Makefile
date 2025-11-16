@@ -1,49 +1,61 @@
 # Makefile
 
-# Tell make these are not real files
-.PHONY: lint format type-check test clean install run
+# These targets are not real files
+.PHONY: lint format type-check test check pre-commit-install pre-commit clean setup
 
 # ---------------------------
 # Linting with Ruff
 # ---------------------------
 lint:
-	ruff check .
+	poetry run ruff check src tests
 
 # ---------------------------
 # Auto-format with Ruff
 # ---------------------------
 format:
-	ruff format .
+	poetry run ruff format src tests
 
 # ---------------------------
-# Static Type Checking
+# Static type checking with MyPy
 # ---------------------------
 type-check:
-	mypy financial_tracker_demo
+	poetry run mypy --config-file=mypy.ini src
 
 # ---------------------------
-# PyTest
+# Run the test suite with pytest
 # ---------------------------
 test:
-	pytest -q --disable-warnings --maxfail=1
+	poetry run pytest
 
 # ---------------------------
-# Install project dependencies
-# (useful when onboarding machines/CI)
+# Run all quality checks (no tests)
+# Useful before committing
 # ---------------------------
-install:
+check: lint format type-check
+
+# ---------------------------
+# Install pre-commit hooks (one-time per clone)
+# ---------------------------
+pre-commit-install:
+	poetry run pre-commit install
+
+# ---------------------------
+# Run all pre-commit hooks on the entire repo
+# Good before big pushes
+# ---------------------------
+pre-commit:
+	poetry run pre-commit run --all-files
+
+# ---------------------------
+# Setup convenience: install deps + pre-commit hooks
+# ---------------------------
+setup: 
 	poetry install
+	poetry run pre-commit install
 
 # ---------------------------
-# Common cleanup
+# Clean caches and compiled artifacts
 # ---------------------------
 clean:
 	rm -rf .mypy_cache .pytest_cache .ruff_cache
-	find . -type d -name "__pycache__" -exec rm -r {} +
-
-# ---------------------------
-# Run your application
-# (replace main.py with your entry point)
-# ---------------------------
-run:
-	python -m financial_tracker_demo
+	find . -type d -name "__pycache__" -exec rm -rf {} +
