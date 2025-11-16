@@ -1,5 +1,5 @@
 [project]
-name = "financial-tracker-demo"
+name = "financial-tracker"
 version = "0.1.0"
 description = ""
 authors = [
@@ -20,7 +20,7 @@ dependencies = [
 ]
 
 [tool.poetry]
-packages = [{include = "financial_tracker_demo", from = "src"}]
+packages = [{include = "financial_tracker", from = "src"}]
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
