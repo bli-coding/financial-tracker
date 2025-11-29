@@ -1,93 +1,134 @@
-# Personal Financial Tracker
+# Financial Tracker – Local-First Data Pipeline
 
-This repository hosts a proof-of-concept (POC) designed to experiment with automating personal financial data ingestion using the Plaid API, storing normalized records in an open table format (Delta/Iceberg), and exposing the curated data to a lightweight BI layer.
+This project explores a fully local-first approach to extracting transaction histories using Plaid, storing the result in Delta format, and performing additional transformations for analytics.
 
-## Repository Layout
+The long-term goal is to automate the ingestion → enrichment → analytics workflow so the project behaves like a personal financial tracker app, but with richer analytical metrics and significantly lower cost (essentially only Plaid API usage).
 
-- `docs/` – planning artifacts, architecture sketches, and experiment notes.
-- `config/` – example environment files and configuration templates.
-- `src/` – source code grouped by responsibility (sandbox experiments, ingestion, storage, orchestration, analytics).
-- `infra/` – infrastructure as code or container definitions when you are ready to deploy repeatably.
+## End-to-End Architecture
 
-## Quick Start
+```
+→ Raw JSON
+→ Canonical Normalization
+→ Delta Lake
+→ DuckDB
+→ Google Sheets (user enrichment)
+→ Silver Layer (post-enrichment extraction)
+→ Gold Layer (final transformations)
+→ Metabase / BI Tool
+→ Dashboards
+→ Alerts / Weekly–Monthly Reports
+```
 
-1. Duplicate `.env.template` as `.env` and populate Plaid + storage credentials.
-2. Follow `docs/roadmap.md` to implement each milestone incrementally.
-3. Use the `sandbox` module to validate Plaid connectivity before persisting data.
-4. Promote the validated logic into `ingestion` and `storage` modules, then automate via `orchestration`.
-5. Connect your BI tool (Metabase or similar) using the views/materialized tables generated in `analytics`.
+---
 
-The repository currently contains stubs and documentation so you can grow the project deliberately without mixing planning and execution artifacts.
+## 1. Fetch Transactions from Plaid Sandbox
 
+The pipeline begins by using the Plaid Quickstart to retrieve example transaction data.
 
+The script `fetch_transactions.py` retrieves transactions and stores the full JSON response as:
 
+```
+data/raw/plaidsandbox/transactions_<timestamp>.json
+```
 
-quick setup env
-1. python3 --version
-2. create env: python -m venv .venv
-3. activate env: source .venv/bin/activate
-4. java -version
-5. download latest version: brew install openjdk@17
-6. set path for MacOS to find Java
-    echo 'export PATH="/usr/local/opt/openjdk@17/bin:$PATH"' >> ~/.zshrc
-    echo 'export CPPFLAGS="-I/usr/local/opt/openjdk@17/include"' >> ~/.zshrc
-7. validate java : java -version
+### Key Properties
 
+* Each run creates its own timestamped snapshot — no overwrites.
+* Raw payloads remain immutable for perfect reproducibility.
 
-create project venv with Poetry
-1. install pipx
-    brew install pipx
-    pipx ensurepath
-2. install poetry: pipx install poetry
-3. check version: poetry --version
-5. create a new project: poetry new financial-tracker-demo 
-6. designate which python to use in poetry env
-    ls /opt/homebrew/bin/python* (pick one version)
-    poetry env use /opt/homebrew/bin/python3.14
-7. retrieve the venv activate command
-    poetry env activate
-    copy paste the command line and activate env
+---
 
+## 2. Normalize and Validate Raw JSON
 
-Add core dependencies
-1. after activing the env, add Plaid + HTTP: poetry add plaid-python python-dotenv httpx
-2. add data engineering and data toolings: poetry add duckdb deltalake pyspark pandas polars delta-spark
-3. Create packages in a dedicated dev group: poetry add --group dev ruff mypy pytest pytest-cov
-4. show the dependency tree: poetry show --tree
-5. Create ruff.toml, mypy.ini, pytest.ini rules
-6. add Makefile (optional)
+Raw API responses are transformed into a canonical structure using:
 
+```
+src/financial_tracker/normalization.py
+```
 
+Normalization produces consistent `CanonicalTransaction` objects.
 
-Set up .env management
-1. create credential template: config/.env.template
-2. create .secret outside of the project and put in the sensitive info: 
-    mkdir -p ~/.secrets
-    chmod 700 ~/.secrets
-    touch ~/.secrets/financial-tracker.env
-3. install direnv: brew install direnv
-4. hook to shell: echo 'eval "$(direnv hook zsh)"' >> ~/.zshrc
-    remember to reload shell config
-5. create .envrc which tells direnv everytime when you cd into the project: touch .envrc
-    unblock restriction: direnv allow
-    then fill in path where credentials from
+Each canonical record is validated against:
 
+```
+config/schemas/transactions.schema.yaml
+```
 
+### Validation Checks
 
-Setup sandbox credentials and clone quickstart
-1. Retrieve client ID and secrets from Plaid dashboard and save it on local .secrets
-2. clone repo quickstart
-3. copy .env sample
-4. create a .vnerc to auto import variables into .env
-    quick check if import succeeded: env | grep PLAID
-5. run backend: 
-    cd ~/repos/quickstart
-    cd python
-    source .venv/bin/activate
-    ./start.sh
-6. run frontend: cd ~/repos/quickstart/frontend
-    npm start
-7. make sure you have the certif for HTTPs connection: pip install --upgrade certifi
-8. Go through the registeration with Quickstart and you should receive item_id and access_token
+* Required fields
+* Correct data types
+* Consistent schema for downstream storage and analysis
 
+This ensures all normalized data is clean, predictable, and safe for analytics.
 
+---
+
+## 3. Persist Canonical Data to Delta Lake
+
+Validated canonical records are stored in a local Delta Lake table located at:
+
+```
+data/delta/transactions/
+```
+
+Implemented in:
+
+```
+src/storage/delta_writer.py
+```
+
+### Delta Lake Features
+
+* Partitioned by `txn_year` and `txn_month`
+* Idempotent upserts using `transaction_id`
+* Local ACID storage suitable for incremental analytics
+
+---
+
+## 4. Query Data with DuckDB
+
+Delta Lake data can be queried directly using DuckDB:
+
+```sql
+SELECT *
+FROM delta_scan('data/delta/transactions');
+```
+
+DuckDB provides fast OLAP-style querying for local workloads and interactive analysis.
+
+---
+
+## 5. Sync Enriched Data to Google Sheets
+
+A Google Sheets sync provides a human-enrichment layer where users can add manual labels, categories, and notes.
+
+Only new canonical rows—based on a `pulled_at` watermark—are appended.
+
+### Sync Behavior
+
+* Append-only; never overwrites existing data
+* Preserves user-entered columns (tags, categories, notes, etc.)
+* Logs sync metadata to:
+
+```
+data/metadata/sheets_sync_log.jsonl
+```
+
+Implemented in:
+
+```
+src/financial_tracker/google_sync.py
+```
+
+---
+
+If you’d like, I can extend this with:
+
+* Setup instructions (`poetry`, kernels, pre-commit, environment vars)
+* Diagrams (ASCII or mermaid)
+* CLI usage examples
+* Development workflow and file structure
+* Future roadmap section
+
+Just let me know and I’ll add it.

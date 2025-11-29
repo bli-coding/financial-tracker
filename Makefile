@@ -85,3 +85,9 @@ jupyter-lab:
 
 delta-materialize:
 	poetry run python src/financial_tracker/scripts/materialize_delta.py
+
+
+.PHONY: sync-raw-to-sheets
+
+sync-raw-to-sheets:
+	poetry run python -m financial_tracker.google_sync
