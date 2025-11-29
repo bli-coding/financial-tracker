@@ -79,3 +79,9 @@ normalize-plaid:
 
 jupyter-lab:
 	poetry run jupyter lab
+
+
+.PHONY: delta-materialize
+
+delta-materialize:
+	poetry run python src/financial_tracker/scripts/materialize_delta.py
