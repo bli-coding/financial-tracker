@@ -16,7 +16,10 @@ repos:
     hooks:
       - id: mypy
         args: ["--config-file=mypy.ini"]
-        additional_dependencies: []  # Poetry provides deps; no need to duplicate
+        additional_dependencies:
+          - types-PyYAML
+          - types-jsonschema
+          - plaid-python   
 
   # 3) Optional: Pytest as a manual hook (not on every commit by default)
   #    You can run: `pre-commit run pytest --all-files` before big pushes.

@@ -59,3 +59,23 @@ setup:
 clean:
 	rm -rf .mypy_cache .pytest_cache .ruff_cache
 	find . -type d -name "__pycache__" -exec rm -rf {} +
+
+
+.PHONY: fetch-plaid
+
+# --------------------------------
+# Pull a new Plaid snapshot and archive it
+# --------------------------------
+fetch-plaid:
+	poetry run python src/financial_tracker/fetch_transactions.py
+
+
+.PHONY: normalize-plaid
+
+normalize-plaid:
+	poetry run python src/financial_tracker/normalization.py
+
+.PHONY: jupyter-lab
+
+jupyter-lab:
+	poetry run jupyter lab

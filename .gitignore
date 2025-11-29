@@ -12,6 +12,7 @@ __pycache__/
 
 # Data / DuckDB
 data/
+tmp/
 *.db
 *.duckdb
 
@@ -22,3 +23,6 @@ data/
 .mypy_cache/
 .pytest_cache/
 .ruff_cache/
+
+# ipynb files
+*.ipynb

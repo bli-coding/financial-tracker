@@ -1,0 +1,79 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+title: "CanonicalTransaction"
+type: object
+required:
+  - source
+  - raw_file_path
+  - pulled_at
+  - account_id
+  - transaction_id
+  - date
+  - amount
+  - pending
+
+properties:
+  # --- metadata ---
+  source:
+    type: string
+  raw_file_path:
+    type: string
+  pulled_at:
+    type: string
+    format: date-time
+
+  # --- item / institution ---
+  item_id:
+    type: [string, "null"]
+  institution_id:
+    type: [string, "null"]
+  institution_name:
+    type: [string, "null"]
+
+  # --- accounts ---
+  account_id:
+    type: string
+  account_name:
+    type: [string, "null"]
+  account_mask:
+    type: [string, "null"]
+  account_type:
+    type: [string, "null"]
+  account_subtype:
+    type: [string, "null"]
+  iso_currency_code:
+    type: [string, "null"]
+
+  # --- transaction core ---
+  transaction_id:
+    type: string
+  date:
+    type: string
+    format: date
+  authorized_date:
+    type: [string, "null"]
+  amount:
+    type: number
+  name:
+    type: [string, "null"]
+  merchant_name:
+    type: [string, "null"]
+  counterparty_name:
+    type: [string, "null"]
+
+  # --- categories ---
+  category_primary:
+    type: [string, "null"]
+  category_detailed:
+    type: [string, "null"]
+  category_confidence_level:
+    type: [string, "null"]
+
+  # --- status / channel ---
+  pending:
+    type: boolean
+  payment_channel:
+    type: [string, "null"]
+  website:
+    type: [string, "null"]
+  logo_url:
+    type: [string, "null"]
