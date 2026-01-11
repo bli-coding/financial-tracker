@@ -254,3 +254,4 @@ duckdb data/warehouse/financial_tracker.duckdb -c "SELECT * FROM transactions LI
 ```
 
 
+

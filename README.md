@@ -21,6 +21,48 @@ The long-term goal is to automate the ingestion → enrichment → analytics wor
 
 ---
 
+## Setup: Credentials & Environment Variables
+
+This project uses `direnv` to manage environment variables. Secrets are loaded from `~/.secrets/financial-tracker.env` (outside the repo).
+
+### Required Environment Variables
+
+#### Plaid Configuration
+- `PLAID_CLIENT_ID`: Your Plaid client ID (same for all environments)
+- `PLAID_SECRET`: Your Plaid secret (same for all environments)
+- `PLAID_ENV`: Environment to use - `"sandbox"`, `"development"`, or `"production"`
+  - Set to `"production"` to hit the real Plaid API
+  - Set to `"development"` for development environment
+  - Defaults to `"sandbox"` if not set
+- `PLAID_ACCESS_TOKEN`: Access token for sandbox environment
+- `PROD_PLAID_ACCESS_TOKEN`: (Optional) Access token for production/development
+  - When `PLAID_ENV` is `"production"` or `"development"`, the code prefers `PROD_PLAID_ACCESS_TOKEN` if set
+  - Falls back to `PLAID_ACCESS_TOKEN` if `PROD_PLAID_ACCESS_TOKEN` is not set
+  - Recommended for clear separation between sandbox and production tokens
+
+#### Google Sheets Configuration
+- `GOOGLE_SHEETS_SERVICE_ACCOUNT_JSON`: Path to Google service account JSON key file
+- `GOOGLE_SHEETS_SPREADSHEET_ID`: Google Sheets spreadsheet ID (from the URL)
+- `RAW_SHEET_TAB_NAME`: (Optional) Worksheet/tab name, defaults to `"Raw_Transactions"`
+
+### Example `~/.secrets/financial-tracker.env` structure:
+
+```bash
+# Plaid
+PLAID_CLIENT_ID=your_client_id
+PLAID_SECRET=your_secret
+PLAID_ENV=production
+PLAID_ACCESS_TOKEN=your_sandbox_token
+PROD_PLAID_ACCESS_TOKEN=your_production_token
+
+# Google Sheets
+GOOGLE_SHEETS_SERVICE_ACCOUNT_JSON=~/.secrets/google-service-account.json
+GOOGLE_SHEETS_SPREADSHEET_ID=your_spreadsheet_id
+RAW_SHEET_TAB_NAME=Raw_Transactions
+```
+
+---
+
 ## 1. Fetch Transactions from Plaid Sandbox
 
 The pipeline begins by using the Plaid Quickstart to retrieve example transaction data.
