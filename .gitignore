@@ -12,6 +12,8 @@ __pycache__/
 
 # Data / DuckDB
 data/
+data/raw/**
+data/metadata/**
 tmp/
 *.db
 *.duckdb

@@ -1,8 +1,8 @@
 import pandas as pd
 
+from financial_tracker.delta_writer import DeltaWriter
 from financial_tracker.logging_utils import log_ingestion_run
 from financial_tracker.normalization import normalize_latest
-from financial_tracker.storage.delta_writer import DeltaWriter
 
 
 def main():
