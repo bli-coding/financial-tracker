@@ -312,28 +312,6 @@ DUCKDB_PATH=./data/finance.db
    python -m financial_tracker.google_sync            # Appends only new rows
    ```
 
-### Querying Data
-
-```bash
-# Open DuckDB CLI
-duckdb data/finance.db
-
-# Query current active transactions
-SELECT * FROM silver_transactions_current LIMIT 10;
-
-# Monthly spending summary
-SELECT 
-  txn_year,
-  txn_month,
-  SUM(amount) as total_spending,
-  COUNT(*) as transaction_count
-FROM silver_transactions_current
-WHERE is_active = TRUE
-GROUP BY txn_year, txn_month
-ORDER BY txn_year DESC, txn_month DESC;
-```
-
----
 
 ## Future Roadmap
 
