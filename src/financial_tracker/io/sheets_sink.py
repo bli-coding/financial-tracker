@@ -15,10 +15,7 @@ def get_gspread_client() -> gspread.Client:
     """
     key_path = os.getenv("GOOGLE_SHEETS_SERVICE_ACCOUNT_JSON")
     if not key_path:
-        raise RuntimeError(
-            "GOOGLE_SHEETS_SERVICE_ACCOUNT_JSON is not set. "
-            "Point it to your service account JSON file."
-        )
+        raise RuntimeError("GOOGLE_SHEETS_SERVICE_ACCOUNT_JSON is not set. Point it to your service account JSON file.")
 
     key_file = Path(key_path).expanduser()
     if not key_file.exists():
@@ -26,7 +23,7 @@ def get_gspread_client() -> gspread.Client:
 
     scopes = [
         "https://www.googleapis.com/auth/spreadsheets",
-        "https://www.googleapis.com/auth/drive.readonly",
+        "https://www.googleapis.com/auth/drive",  # <-- was readonly; needs write for appends reliably
     ]
 
     creds = Credentials.from_service_account_file(str(key_file), scopes=scopes)
@@ -47,11 +44,6 @@ def append_dataframe_aligned_to_header(
       - If worksheet exists with a header row:
           * Align df columns to that header (reorder + fill missing cols with "")
           * Append rows at the bottom, leaving any extra manual columns untouched.
-
-    This lets you:
-      - Store canonical columns in the sheet
-      - Add extra columns manually (tags, notes, platform, etc.)
-      - Keep re-running sync to only append *new* canonical rows
     """
     client = get_gspread_client()
     sh = client.open_by_key(spreadsheet_id)
@@ -59,17 +51,13 @@ def append_dataframe_aligned_to_header(
     try:
         ws = sh.worksheet(worksheet_name)
     except gspread.WorksheetNotFound:
-        # Create worksheet and set header from df columns
         ws = sh.add_worksheet(title=worksheet_name, rows="1000", cols="50")
         header = list(df.columns)
         ws.update("A1", [header])
         print(f"Created worksheet '{worksheet_name}' with header from DataFrame.")
     else:
-        # Worksheet exists; try to read header row
         header = ws.row_values(1)
-
         if not header:
-            # Empty header row: initialize it from df.columns
             header = list(df.columns)
             ws.update("A1", [header])
             print(f"Initialized header in worksheet '{worksheet_name}' from DataFrame.")
@@ -78,19 +66,13 @@ def append_dataframe_aligned_to_header(
         print("append_dataframe_aligned_to_header: DataFrame is empty, nothing to append.")
         return
 
-    # Align df to header columns:
-    #  - any missing header col in df => fill with ""
-    #  - extra df columns ignored (not sent)
     aligned = df.copy()
     for col in header:
         if col not in aligned.columns:
             aligned[col] = ""
 
-    aligned = aligned[header]  # same column order as the sheet header
+    aligned = aligned[header]
     values: list[list[str]] = aligned.astype(str).values.tolist()
 
     ws.append_rows(values)
-    print(
-        f"append_dataframe_aligned_to_header: appended {len(values)} rows "
-        f"to worksheet '{worksheet_name}'."
-    )
+    print(f"append_dataframe_aligned_to_header: appended {len(values)} rows to worksheet '{worksheet_name}'.")
